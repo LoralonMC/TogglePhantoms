@@ -42,12 +42,10 @@ messages:
   no-permission: "<red>You don't have permission to use this command."
   player-only: "<red>This command can only be used by players."
   player-not-found: "<red>Player '<player>' has never played on this server."
-  unknown-subcommand: "<red>Unknown subcommand. Use: /togglephantoms [reload|status|admin]"
-  admin-usage: "<red>Usage: /togglephantoms admin <player> <on|off|toggle|status>"
-  invalid-action: "<red>Invalid action. Use: on, off, toggle, or status"
 
   # Other messages
   reload-success: "<green>TogglePhantoms configuration reloaded."
+  reload-failed: "<red>Configuration reload failed. Check console for details."
 
   # PlaceholderAPI status text
   placeholder-enabled: "Enabled"

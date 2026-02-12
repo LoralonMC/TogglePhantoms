@@ -72,7 +72,6 @@ public class YamlStorage implements Storage {
         } else {
             disabledPlayers.remove(uuid);
         }
-        // YAML is simple enough to save synchronously
         saveData();
         return CompletableFuture.completedFuture(null);
     }

@@ -20,12 +20,12 @@ public class PhantomsPlaceholderExpansion extends PlaceholderExpansion {
 
     @Override
     public @NotNull String getAuthor() {
-        return String.join(", ", plugin.getDescription().getAuthors());
+        return String.join(", ", plugin.getPluginMeta().getAuthors());
     }
 
     @Override
     public @NotNull String getVersion() {
-        return plugin.getDescription().getVersion();
+        return plugin.getPluginMeta().getVersion();
     }
 
     @Override
@@ -44,8 +44,8 @@ public class PhantomsPlaceholderExpansion extends PlaceholderExpansion {
         return switch (params.toLowerCase()) {
             case "enabled" -> String.valueOf(!phantomsDisabled);
             case "status" -> phantomsDisabled
-                    ? plugin.getMessages().placeholderDisabled()
-                    : plugin.getMessages().placeholderEnabled();
+                    ? plugin.getMessageManager().placeholderDisabled()
+                    : plugin.getMessageManager().placeholderEnabled();
             default -> null;
         };
     }

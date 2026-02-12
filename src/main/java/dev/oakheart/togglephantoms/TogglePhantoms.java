@@ -1,54 +1,41 @@
 package dev.oakheart.togglephantoms;
 
 import dev.oakheart.togglephantoms.commands.TogglePhantomsCommand;
+import dev.oakheart.togglephantoms.config.ConfigManager;
 import dev.oakheart.togglephantoms.listeners.PhantomListener;
 import dev.oakheart.togglephantoms.listeners.PlayerListener;
+import dev.oakheart.togglephantoms.message.MessageManager;
 import dev.oakheart.togglephantoms.storage.Storage;
 import dev.oakheart.togglephantoms.storage.MySQLStorage;
 import dev.oakheart.togglephantoms.storage.SQLiteStorage;
 import dev.oakheart.togglephantoms.storage.YamlStorage;
+import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.UUID;
+import java.util.logging.Level;
 
 public final class TogglePhantoms extends JavaPlugin {
 
-    private static TogglePhantoms instance;
+    private ConfigManager configManager;
     private Storage storage;
-    private Messages messages;
+    private MessageManager messageManager;
 
     @Override
     public void onEnable() {
-        instance = this;
+        try {
+            initializeComponents();
+            registerListeners();
+            registerCommands();
+            initializeMetrics();
+            registerPlaceholders();
 
-        // Save default config
-        saveDefaultConfig();
-
-        // Load messages
-        messages = new Messages();
-        messages.load(getConfig());
-
-        // Initialize storage based on config
-        initStorage();
-
-        // Register listeners
-        getServer().getPluginManager().registerEvents(new PhantomListener(this), this);
-        getServer().getPluginManager().registerEvents(new PlayerListener(this), this);
-
-        // Load online players into cache (in case of reload)
-        Bukkit.getOnlinePlayers().forEach(player -> storage.loadPlayer(player.getUniqueId()));
-
-        // Register commands
-        new TogglePhantomsCommand(this).register();
-
-        // Register PlaceholderAPI expansion if available
-        if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
-            new PhantomsPlaceholderExpansion(this).register();
-            getLogger().info("PlaceholderAPI found! Registered placeholders.");
+            getLogger().info("TogglePhantoms has been enabled!");
+        } catch (Exception e) {
+            getLogger().log(Level.SEVERE, "Failed to enable TogglePhantoms", e);
+            getServer().getPluginManager().disablePlugin(this);
         }
-
-        getLogger().info("TogglePhantoms has been enabled!");
     }
 
     @Override
@@ -59,17 +46,25 @@ public final class TogglePhantoms extends JavaPlugin {
         getLogger().info("TogglePhantoms has been disabled!");
     }
 
-    private void initStorage() {
-        String storageType = getConfig().getString("storage.type", "yaml").toLowerCase();
+    private void initializeComponents() {
+        configManager = new ConfigManager(this);
+        configManager.load();
 
-        switch (storageType) {
+        messageManager = new MessageManager();
+        messageManager.load(configManager.getConfig());
+
+        initStorage();
+    }
+
+    private void initStorage() {
+        switch (configManager.getStorageType()) {
             case "mysql":
-                String host = getConfig().getString("storage.mysql.host", "localhost");
-                int port = getConfig().getInt("storage.mysql.port", 3306);
-                String database = getConfig().getString("storage.mysql.database", "minecraft");
-                String username = getConfig().getString("storage.mysql.username", "root");
-                String password = getConfig().getString("storage.mysql.password", "");
-                storage = new MySQLStorage(this, host, port, database, username, password);
+                storage = new MySQLStorage(this,
+                        configManager.getMysqlHost(),
+                        configManager.getMysqlPort(),
+                        configManager.getMysqlDatabase(),
+                        configManager.getMysqlUsername(),
+                        configManager.getMysqlPassword());
                 getLogger().info("Using MySQL storage.");
                 break;
             case "sqlite":
@@ -84,25 +79,53 @@ public final class TogglePhantoms extends JavaPlugin {
         }
     }
 
-    public void reloadPlugin() {
-        reloadConfig();
-        messages.load(getConfig());
+    private void registerListeners() {
+        getServer().getPluginManager().registerEvents(new PhantomListener(this), this);
+        getServer().getPluginManager().registerEvents(new PlayerListener(this), this);
+
+        // Load online players into cache (in case of reload)
+        Bukkit.getOnlinePlayers().forEach(player -> storage.loadPlayer(player.getUniqueId()));
+    }
+
+    private void registerCommands() {
+        new TogglePhantomsCommand(this).register();
+    }
+
+    private void initializeMetrics() {
+        int pluginId = 29484;
+        new Metrics(this, pluginId);
+    }
+
+    private void registerPlaceholders() {
+        if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
+            new PhantomsPlaceholderExpansion(this).register();
+            getLogger().info("PlaceholderAPI found! Registered placeholders.");
+        }
+    }
+
+    public boolean reloadPlugin() {
+        if (!configManager.reload()) {
+            return false;
+        }
+        messageManager.load(configManager.getConfig());
         if (storage != null) {
             storage.close();
         }
         initStorage();
+        Bukkit.getOnlinePlayers().forEach(player -> storage.loadPlayer(player.getUniqueId()));
+        return true;
     }
 
-    public static TogglePhantoms getInstance() {
-        return instance;
+    public ConfigManager getConfigManager() {
+        return configManager;
     }
 
     public Storage getStorage() {
         return storage;
     }
 
-    public Messages getMessages() {
-        return messages;
+    public MessageManager getMessageManager() {
+        return messageManager;
     }
 
     public boolean arePhantomsDisabled(UUID uuid) {

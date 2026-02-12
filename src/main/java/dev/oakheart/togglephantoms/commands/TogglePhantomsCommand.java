@@ -3,8 +3,8 @@ package dev.oakheart.togglephantoms.commands;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.tree.LiteralCommandNode;
-import dev.oakheart.togglephantoms.Messages;
 import dev.oakheart.togglephantoms.TogglePhantoms;
+import dev.oakheart.togglephantoms.message.MessageManager;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import io.papermc.paper.command.brigadier.Commands;
 import io.papermc.paper.command.brigadier.argument.ArgumentTypes;
@@ -29,8 +29,8 @@ public class TogglePhantomsCommand {
         this.plugin = plugin;
     }
 
-    private Messages messages() {
-        return plugin.getMessages();
+    private MessageManager messages() {
+        return plugin.getMessageManager();
     }
 
     private void send(CommandSender sender, Optional<Component> message) {
@@ -72,8 +72,12 @@ public class TogglePhantomsCommand {
                 .then(Commands.literal("reload")
                         .requires(src -> src.getSender().hasPermission("togglephantoms.reload"))
                         .executes(ctx -> {
-                            plugin.reloadPlugin();
-                            send(ctx.getSource().getSender(), messages().reloadSuccess());
+                            CommandSender sender = ctx.getSource().getSender();
+                            if (plugin.reloadPlugin()) {
+                                send(sender, messages().reloadSuccess());
+                            } else {
+                                send(sender, messages().reloadFailed());
+                            }
                             return Command.SINGLE_SUCCESS;
                         }))
                 // Status subcommand

@@ -33,7 +33,7 @@ public class SQLiteStorage implements Storage {
             String url = "jdbc:sqlite:" + new File(dataFolder, "playerdata.db").getAbsolutePath();
             connection = DriverManager.getConnection(url);
         } catch (SQLException e) {
-            plugin.getLogger().severe("Could not connect to SQLite database: " + e.getMessage());
+            throw new RuntimeException("Could not connect to SQLite database", e);
         }
     }
 
@@ -45,7 +45,7 @@ public class SQLiteStorage implements Storage {
         try (Statement stmt = connection.createStatement()) {
             stmt.execute(sql);
         } catch (SQLException e) {
-            plugin.getLogger().severe("Could not create SQLite table: " + e.getMessage());
+            throw new RuntimeException("Could not create SQLite table", e);
         }
     }
 
