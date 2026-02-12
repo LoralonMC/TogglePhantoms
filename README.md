@@ -4,16 +4,16 @@ A lightweight Paper plugin that allows players to toggle phantom spawning for th
 
 ## Features
 
-- Per-player phantom toggle
+- Per-player phantom toggle using Paper's `PhantomPreSpawnEvent` for accurate insomnia-based blocking
 - Multiple storage backends (SQLite, YAML, MySQL)
-- Fully configurable messages using MiniMessage format
-- PlaceholderAPI support for menu plugins
+- Fully configurable messages using MiniMessage format (any message can be disabled by leaving it empty)
+- PlaceholderAPI support
 - Admin commands to manage other players
 - Async database operations with in-memory caching
 
 ## Requirements
 
-- Paper 1.21+
+- Paper 1.21.10+
 - Java 21+
 - (Optional) PlaceholderAPI for placeholders
 
@@ -60,20 +60,21 @@ storage:
     password: ""
 
 # Messages (MiniMessage format)
+# Available placeholders: <player> where applicable
 # Leave a message empty ("") to disable it
 messages:
   phantoms-enabled: "<green>Phantom spawning has been <green>enabled</green> for you."
   phantoms-disabled: "<green>Phantom spawning has been <red>disabled</red> for you."
-  # ... see config.yml for all options
+  # ... see config.yml for all message options
 ```
 
 ## Building
 
 ```bash
-./gradlew build
+./gradlew shadowJar
 ```
 
-The built jar will be in `build/libs/`.
+The built JAR will be in `build/libs/`.
 
 ## License
 
