@@ -13,9 +13,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.logging.Logger;
 
-/**
- * Manages plugin configuration with validation, caching, and safe reload.
- */
 public class ConfigManager {
 
     private static final Set<String> VALID_STORAGE_TYPES = Set.of("yaml", "sqlite", "mysql");
@@ -25,7 +22,6 @@ public class ConfigManager {
     private final File configFile;
     private FileConfiguration config;
 
-    // Cached config values
     private String storageType;
     private String mysqlHost;
     private int mysqlPort;
@@ -39,9 +35,6 @@ public class ConfigManager {
         this.configFile = new File(plugin.getDataFolder(), "config.yml");
     }
 
-    /**
-     * Initial load of configuration. Called once during onEnable.
-     */
     public void load() {
         if (!configFile.exists()) {
             plugin.saveResource("config.yml", false);
@@ -57,11 +50,6 @@ public class ConfigManager {
         cacheValues();
     }
 
-    /**
-     * Reloads configuration from disk. Validates before applying.
-     *
-     * @return true if reload was successful
-     */
     public boolean reload() {
         FileConfiguration newConfig = YamlConfiguration.loadConfiguration(configFile);
 
@@ -76,11 +64,7 @@ public class ConfigManager {
         return true;
     }
 
-    /**
-     * Merges default config values from the JAR resource into the user's config.
-     * Only saves to disk if new keys were added (to avoid reformatting the file
-     * on every startup). When no new keys exist, the file stays untouched.
-     */
+    // Only saves to disk if new keys were added, avoiding SnakeYAML reformatting
     private void mergeDefaults() {
         try (var stream = plugin.getResource("config.yml")) {
             if (stream != null) {
@@ -99,9 +83,6 @@ public class ConfigManager {
         }
     }
 
-    /**
-     * Checks if the defaults contain any value keys not present in the user's config.
-     */
     private boolean hasNewKeys(FileConfiguration defaults) {
         for (String key : defaults.getKeys(true)) {
             if (!defaults.isConfigurationSection(key) && !config.contains(key, true)) {
@@ -111,23 +92,15 @@ public class ConfigManager {
         return false;
     }
 
-    /**
-     * Validates configuration values and logs warnings for issues.
-     *
-     * @param configToValidate the configuration to validate
-     * @return true if configuration is valid
-     */
     private boolean validate(FileConfiguration configToValidate) {
         List<String> warnings = new ArrayList<>();
         boolean valid = true;
 
-        // Validate storage type
         String type = configToValidate.getString("storage.type", "yaml").toLowerCase();
         if (!VALID_STORAGE_TYPES.contains(type)) {
             warnings.add("Invalid storage type '" + type + "', defaulting to 'yaml'. Valid types: yaml, sqlite, mysql");
         }
 
-        // Validate MySQL settings if MySQL is selected
         if ("mysql".equals(type)) {
             String host = configToValidate.getString("storage.mysql.host", "");
             if (host.isBlank()) {
@@ -150,9 +123,6 @@ public class ConfigManager {
         return valid;
     }
 
-    /**
-     * Caches frequently accessed config values as typed fields.
-     */
     private void cacheValues() {
         storageType = config.getString("storage.type", "yaml").toLowerCase();
         if (!VALID_STORAGE_TYPES.contains(storageType)) {
@@ -166,9 +136,6 @@ public class ConfigManager {
         mysqlPassword = config.getString("storage.mysql.password", "");
     }
 
-    /**
-     * Gets the raw FileConfiguration for direct access.
-     */
     public FileConfiguration getConfig() {
         return config;
     }

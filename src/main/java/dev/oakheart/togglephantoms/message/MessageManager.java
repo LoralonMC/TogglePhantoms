@@ -4,123 +4,109 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
+import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.entity.Player;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
-/**
- * Manages all player-facing messages with MiniMessage formatting.
- * Uses TagResolver API with Placeholder.unparsed() for dynamic content.
- */
 public class MessageManager {
 
     private final MiniMessage miniMessage = MiniMessage.miniMessage();
-
-    private String phantomsEnabled;
-    private String phantomsDisabled;
-    private String statusEnabled;
-    private String statusDisabled;
-    private String adminPhantomsEnabled;
-    private String adminPhantomsDisabled;
-    private String adminStatusEnabled;
-    private String adminStatusDisabled;
-    private String adminNotifyEnabled;
-    private String adminNotifyDisabled;
-    private String noPermission;
-    private String playerOnly;
-    private String playerNotFound;
-    private String reloadSuccess;
-    private String reloadFailed;
+    private final Map<String, String> texts = new HashMap<>();
+    private final Map<String, String> displays = new HashMap<>();
 
     private String placeholderEnabled;
     private String placeholderDisabled;
 
-    /**
-     * Loads all messages from the configuration.
-     *
-     * @param config The plugin configuration
-     */
     public void load(FileConfiguration config) {
-        phantomsEnabled = config.getString("messages.phantoms-enabled", "<green>Phantom spawning has been <green>enabled</green> for you.");
-        phantomsDisabled = config.getString("messages.phantoms-disabled", "<green>Phantom spawning has been <red>disabled</red> for you.");
-        statusEnabled = config.getString("messages.status-enabled", "<gray>Phantom spawning is currently <green>enabled</green> for you.");
-        statusDisabled = config.getString("messages.status-disabled", "<gray>Phantom spawning is currently <red>disabled</red> for you.");
-        adminPhantomsEnabled = config.getString("messages.admin-phantoms-enabled", "<green>Phantom spawning has been <green>enabled</green> for <player>.");
-        adminPhantomsDisabled = config.getString("messages.admin-phantoms-disabled", "<green>Phantom spawning has been <red>disabled</red> for <player>.");
-        adminStatusEnabled = config.getString("messages.admin-status-enabled", "<gray>Phantom spawning is <green>enabled</green> for <player>.");
-        adminStatusDisabled = config.getString("messages.admin-status-disabled", "<gray>Phantom spawning is <red>disabled</red> for <player>.");
-        adminNotifyEnabled = config.getString("messages.admin-notify-enabled", "<yellow>An admin has <green>enabled</green> phantom spawning for you.");
-        adminNotifyDisabled = config.getString("messages.admin-notify-disabled", "<yellow>An admin has <red>disabled</red> phantom spawning for you.");
-        noPermission = config.getString("messages.no-permission", "<red>You don't have permission to use this command.");
-        playerOnly = config.getString("messages.player-only", "<red>This command can only be used by players.");
-        playerNotFound = config.getString("messages.player-not-found", "<red>Player '<player>' has never played on this server.");
-        reloadSuccess = config.getString("messages.reload-success", "<green>TogglePhantoms configuration reloaded.");
-        reloadFailed = config.getString("messages.reload-failed", "<red>Configuration reload failed. Check console for details.");
+        texts.clear();
+        displays.clear();
 
-        placeholderEnabled = config.getString("messages.placeholder-enabled", "Enabled");
-        placeholderDisabled = config.getString("messages.placeholder-disabled", "Disabled");
+        for (String key : new String[]{
+                "phantoms-enabled", "phantoms-disabled",
+                "status-enabled", "status-disabled",
+                "admin-phantoms-enabled", "admin-phantoms-disabled",
+                "admin-status-enabled", "admin-status-disabled",
+                "admin-notify-enabled", "admin-notify-disabled",
+                "player-not-found",
+                "reload-success", "reload-failed"
+        }) {
+            texts.put(key, config.getString("messages." + key + ".text", ""));
+            displays.put(key, config.getString("messages." + key + ".display", "chat"));
+        }
+
+        placeholderEnabled = config.getString("placeholder-enabled", "Enabled");
+        placeholderDisabled = config.getString("placeholder-disabled", "Disabled");
     }
 
-    // --- Message getters ---
+    // --- Send helpers ---
 
-    public Optional<Component> phantomsEnabled() {
-        return parse(phantomsEnabled);
+    public void send(CommandSender sender, String key, TagResolver... resolvers) {
+        parse(key, resolvers).ifPresent(component -> {
+            String display = displays.getOrDefault(key, "chat");
+            if ("action_bar".equals(display) && sender instanceof Player player) {
+                player.sendActionBar(component);
+            } else {
+                sender.sendMessage(component);
+            }
+        });
     }
 
-    public Optional<Component> phantomsDisabled() {
-        return parse(phantomsDisabled);
+    // --- Named convenience methods ---
+
+    public void sendPhantomsEnabled(CommandSender sender) {
+        send(sender, "phantoms-enabled");
     }
 
-    public Optional<Component> statusEnabled() {
-        return parse(statusEnabled);
+    public void sendPhantomsDisabled(CommandSender sender) {
+        send(sender, "phantoms-disabled");
     }
 
-    public Optional<Component> statusDisabled() {
-        return parse(statusDisabled);
+    public void sendStatusEnabled(CommandSender sender) {
+        send(sender, "status-enabled");
     }
 
-    public Optional<Component> adminPhantomsEnabled(String playerName) {
-        return parse(adminPhantomsEnabled, Placeholder.unparsed("player", playerName));
+    public void sendStatusDisabled(CommandSender sender) {
+        send(sender, "status-disabled");
     }
 
-    public Optional<Component> adminPhantomsDisabled(String playerName) {
-        return parse(adminPhantomsDisabled, Placeholder.unparsed("player", playerName));
+    public void sendAdminPhantomsEnabled(CommandSender sender, String playerName) {
+        send(sender, "admin-phantoms-enabled", Placeholder.unparsed("player", playerName));
     }
 
-    public Optional<Component> adminStatusEnabled(String playerName) {
-        return parse(adminStatusEnabled, Placeholder.unparsed("player", playerName));
+    public void sendAdminPhantomsDisabled(CommandSender sender, String playerName) {
+        send(sender, "admin-phantoms-disabled", Placeholder.unparsed("player", playerName));
     }
 
-    public Optional<Component> adminStatusDisabled(String playerName) {
-        return parse(adminStatusDisabled, Placeholder.unparsed("player", playerName));
+    public void sendAdminStatusEnabled(CommandSender sender, String playerName) {
+        send(sender, "admin-status-enabled", Placeholder.unparsed("player", playerName));
     }
 
-    public Optional<Component> adminNotifyEnabled() {
-        return parse(adminNotifyEnabled);
+    public void sendAdminStatusDisabled(CommandSender sender, String playerName) {
+        send(sender, "admin-status-disabled", Placeholder.unparsed("player", playerName));
     }
 
-    public Optional<Component> adminNotifyDisabled() {
-        return parse(adminNotifyDisabled);
+    public void sendAdminNotifyEnabled(CommandSender sender) {
+        send(sender, "admin-notify-enabled");
     }
 
-    public Optional<Component> noPermission() {
-        return parse(noPermission);
+    public void sendAdminNotifyDisabled(CommandSender sender) {
+        send(sender, "admin-notify-disabled");
     }
 
-    public Optional<Component> playerOnly() {
-        return parse(playerOnly);
+    public void sendPlayerNotFound(CommandSender sender, String playerName) {
+        send(sender, "player-not-found", Placeholder.unparsed("player", playerName));
     }
 
-    public Optional<Component> playerNotFound(String playerName) {
-        return parse(playerNotFound, Placeholder.unparsed("player", playerName));
+    public void sendReloadSuccess(CommandSender sender) {
+        send(sender, "reload-success");
     }
 
-    public Optional<Component> reloadSuccess() {
-        return parse(reloadSuccess);
-    }
-
-    public Optional<Component> reloadFailed() {
-        return parse(reloadFailed);
+    public void sendReloadFailed(CommandSender sender) {
+        send(sender, "reload-failed");
     }
 
     public String placeholderEnabled() {
@@ -131,12 +117,11 @@ public class MessageManager {
         return placeholderDisabled;
     }
 
-    // --- Parsing utilities ---
-
-    private Optional<Component> parse(String message, TagResolver... resolvers) {
-        if (message == null || message.isEmpty()) {
+    private Optional<Component> parse(String key, TagResolver... resolvers) {
+        String text = texts.get(key);
+        if (text == null || text.isEmpty()) {
             return Optional.empty();
         }
-        return Optional.of(miniMessage.deserialize(message, resolvers));
+        return Optional.of(miniMessage.deserialize(text, resolvers));
     }
 }

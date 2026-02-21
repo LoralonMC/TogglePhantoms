@@ -5,9 +5,10 @@ import dev.oakheart.togglephantoms.config.ConfigManager;
 import dev.oakheart.togglephantoms.listeners.PhantomListener;
 import dev.oakheart.togglephantoms.listeners.PlayerListener;
 import dev.oakheart.togglephantoms.message.MessageManager;
-import dev.oakheart.togglephantoms.storage.Storage;
+import dev.oakheart.togglephantoms.placeholder.PhantomsPlaceholderExpansion;
 import dev.oakheart.togglephantoms.storage.MySQLStorage;
 import dev.oakheart.togglephantoms.storage.SQLiteStorage;
+import dev.oakheart.togglephantoms.storage.Storage;
 import dev.oakheart.togglephantoms.storage.YamlStorage;
 import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;
@@ -19,8 +20,8 @@ import java.util.logging.Level;
 public final class TogglePhantoms extends JavaPlugin {
 
     private ConfigManager configManager;
-    private Storage storage;
     private MessageManager messageManager;
+    private Storage storage;
 
     @Override
     public void onEnable() {
@@ -53,37 +54,36 @@ public final class TogglePhantoms extends JavaPlugin {
         messageManager = new MessageManager();
         messageManager.load(configManager.getConfig());
 
-        initStorage();
+        storage = createStorage(configManager.getStorageType());
     }
 
-    private void initStorage() {
-        switch (configManager.getStorageType()) {
-            case "mysql":
-                storage = new MySQLStorage(this,
+    private Storage createStorage(String type) {
+        return switch (type) {
+            case "mysql" -> {
+                getLogger().info("Using MySQL storage.");
+                yield new MySQLStorage(this,
                         configManager.getMysqlHost(),
                         configManager.getMysqlPort(),
                         configManager.getMysqlDatabase(),
                         configManager.getMysqlUsername(),
                         configManager.getMysqlPassword());
-                getLogger().info("Using MySQL storage.");
-                break;
-            case "sqlite":
-                storage = new SQLiteStorage(this);
+            }
+            case "sqlite" -> {
                 getLogger().info("Using SQLite storage.");
-                break;
-            case "yaml":
-            default:
-                storage = new YamlStorage(this);
+                yield new SQLiteStorage(this);
+            }
+            default -> {
                 getLogger().info("Using YAML storage.");
-                break;
-        }
+                yield new YamlStorage(this);
+            }
+        };
     }
 
     private void registerListeners() {
         getServer().getPluginManager().registerEvents(new PhantomListener(this), this);
         getServer().getPluginManager().registerEvents(new PlayerListener(this), this);
 
-        // Load online players into cache (in case of reload)
+        // Load online players into cache (in case of server reload)
         Bukkit.getOnlinePlayers().forEach(player -> storage.loadPlayer(player.getUniqueId()));
     }
 
@@ -92,8 +92,7 @@ public final class TogglePhantoms extends JavaPlugin {
     }
 
     private void initializeMetrics() {
-        int pluginId = 29484;
-        new Metrics(this, pluginId);
+        new Metrics(this, 29484);
     }
 
     private void registerPlaceholders() {
@@ -104,14 +103,23 @@ public final class TogglePhantoms extends JavaPlugin {
     }
 
     public boolean reloadPlugin() {
+        String oldStorageType = configManager.getStorageType();
+
         if (!configManager.reload()) {
             return false;
         }
+
         messageManager.load(configManager.getConfig());
-        if (storage != null) {
-            storage.close();
+
+        String newStorageType = configManager.getStorageType();
+        if (!oldStorageType.equals(newStorageType)) {
+            if (storage != null) {
+                storage.close();
+            }
+            storage = createStorage(newStorageType);
         }
-        initStorage();
+
+        // Refresh cache for online players
         Bukkit.getOnlinePlayers().forEach(player -> storage.loadPlayer(player.getUniqueId()));
         return true;
     }

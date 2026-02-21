@@ -1,34 +1,33 @@
 package dev.oakheart.togglephantoms.storage;
 
 import dev.oakheart.togglephantoms.TogglePhantoms;
-import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Level;
 
 public class YamlStorage implements Storage {
 
     private final TogglePhantoms plugin;
     private final File dataFile;
-    private FileConfiguration dataConfig;
-    private final Set<UUID> disabledPlayers;
+    private YamlConfiguration dataConfig;
+    private final Set<UUID> disabledPlayers = ConcurrentHashMap.newKeySet();
 
     public YamlStorage(TogglePhantoms plugin) {
         this.plugin = plugin;
         this.dataFile = new File(plugin.getDataFolder(), "playerdata.yml");
-        this.disabledPlayers = new HashSet<>();
 
         if (!dataFile.exists()) {
             try {
                 dataFile.getParentFile().mkdirs();
                 dataFile.createNewFile();
             } catch (IOException e) {
-                plugin.getLogger().severe("Could not create playerdata.yml: " + e.getMessage());
+                plugin.getLogger().log(Level.SEVERE, "Could not create playerdata.yml", e);
             }
         }
 
@@ -49,15 +48,19 @@ public class YamlStorage implements Storage {
         }
     }
 
-    private void saveData() {
-        dataConfig.set("disabled-players", disabledPlayers.stream()
-                .map(UUID::toString)
-                .toList());
-        try {
-            dataConfig.save(dataFile);
-        } catch (IOException e) {
-            plugin.getLogger().severe("Could not save playerdata.yml: " + e.getMessage());
-        }
+    private void saveDataAsync() {
+        // Snapshot the current set for the async write
+        var snapshot = disabledPlayers.stream().map(UUID::toString).toList();
+        plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
+            synchronized (this) {
+                dataConfig.set("disabled-players", snapshot);
+                try {
+                    dataConfig.save(dataFile);
+                } catch (IOException e) {
+                    plugin.getLogger().log(Level.SEVERE, "Could not save playerdata.yml", e);
+                }
+            }
+        });
     }
 
     @Override
@@ -72,13 +75,13 @@ public class YamlStorage implements Storage {
         } else {
             disabledPlayers.remove(uuid);
         }
-        saveData();
+        saveDataAsync();
         return CompletableFuture.completedFuture(null);
     }
 
     @Override
     public CompletableFuture<Void> loadPlayer(UUID uuid) {
-        // YAML loads all data at startup, nothing to do
+        // YAML loads all data at startup, nothing to do per-player
         return CompletableFuture.completedFuture(null);
     }
 
@@ -89,6 +92,16 @@ public class YamlStorage implements Storage {
 
     @Override
     public void close() {
-        saveData();
+        // Synchronous save on shutdown to ensure data is persisted
+        synchronized (this) {
+            dataConfig.set("disabled-players", disabledPlayers.stream()
+                    .map(UUID::toString)
+                    .toList());
+            try {
+                dataConfig.save(dataFile);
+            } catch (IOException e) {
+                plugin.getLogger().log(Level.SEVERE, "Could not save playerdata.yml on shutdown", e);
+            }
+        }
     }
 }

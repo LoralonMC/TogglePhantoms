@@ -17,6 +17,12 @@ A lightweight Paper plugin that allows players to toggle phantom spawning for th
 - Java 21+
 - (Optional) PlaceholderAPI for placeholders
 
+## Installation
+
+1. Drop the JAR into your server's `plugins/` folder
+2. Restart the server
+3. Edit `plugins/TogglePhantoms/config.yml` to your liking
+
 ## Commands
 
 | Command | Description | Permission |
@@ -35,7 +41,7 @@ A lightweight Paper plugin that allows players to toggle phantom spawning for th
 | `togglephantoms.reload` | Allows reloading the config | OP |
 | `togglephantoms.*` | All permissions | OP |
 
-## PlaceholderAPI
+## Placeholders
 
 Requires [PlaceholderAPI](https://www.spigotmc.org/resources/placeholderapi.6245/) to be installed.
 
@@ -46,35 +52,7 @@ Requires [PlaceholderAPI](https://www.spigotmc.org/resources/placeholderapi.6245
 
 ## Configuration
 
-```yaml
-# Storage type: yaml, sqlite, or mysql
-storage:
-  type: sqlite
-
-  # MySQL settings (only used if type is mysql)
-  mysql:
-    host: localhost
-    port: 3306
-    database: minecraft
-    username: root
-    password: ""
-
-# Messages (MiniMessage format)
-# Available placeholders: <player> where applicable
-# Leave a message empty ("") to disable it
-messages:
-  phantoms-enabled: "<green>Phantom spawning has been <green>enabled</green> for you."
-  phantoms-disabled: "<green>Phantom spawning has been <red>disabled</red> for you."
-  # ... see config.yml for all message options
-```
-
-## Building
-
-```bash
-./gradlew shadowJar
-```
-
-The built JAR will be in `build/libs/`.
+The plugin supports three storage backends (`sqlite`, `yaml`, `mysql`) and all player-facing messages are fully customizable using MiniMessage format. See `config.yml` for all options.
 
 ## License
 

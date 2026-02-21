@@ -1,13 +1,14 @@
-# TogglePhantoms Configuration
+# ============================================================
+# TogglePhantoms
+# Allows players to toggle phantom spawning for themselves.
+# ============================================================
 
-# PlaceholderAPI placeholders (requires PlaceholderAPI):
-#   %togglephantoms_enabled% - Returns "true" or "false"
-#   %togglephantoms_status%  - Returns the text from placeholder-enabled/placeholder-disabled below
-
+# ============================================================
+# STORAGE SETTINGS
+# ============================================================
 # Storage type: yaml, sqlite, or mysql
 storage:
   type: sqlite
-
   # MySQL settings (only used if type is mysql)
   mysql:
     host: localhost
@@ -16,37 +17,65 @@ storage:
     username: root
     password: ""
 
-# Messages (MiniMessage format)
-# Available placeholders: <player> where applicable
-# Leave a message empty ("") to disable it
+# ============================================================
+# MESSAGES
+# ============================================================
+# MiniMessage format: https://docs.advntr.dev/minimessage/format.html
+# Placeholders: <player> - Target player name (in admin messages)
+# Set text to "" to disable individual messages
+# Display modes: chat, action_bar
 messages:
   # Self toggle messages
-  phantoms-enabled: "<green>Phantom spawning has been <green>enabled</green> for you."
-  phantoms-disabled: "<green>Phantom spawning has been <red>disabled</red> for you."
-
+  phantoms-enabled:
+    text: "<#6C757D>[<#6B7A5E>ᴘʜᴀɴᴛᴏᴍꜱ<#6C757D>] <#f2ebd7>Phantom spawning has been <#8FAA87>enabled<#f2ebd7>."
+    display: chat
+  phantoms-disabled:
+    text: "<#6C757D>[<#6B7A5E>ᴘʜᴀɴᴛᴏᴍꜱ<#6C757D>] <#f2ebd7>Phantom spawning has been <#C27B6B>disabled<#f2ebd7>."
+    display: chat
   # Self status messages
-  status-enabled: "<gray>Phantom spawning is currently <green>enabled</green> for you."
-  status-disabled: "<gray>Phantom spawning is currently <red>disabled</red> for you."
-
-  # Admin messages (use <player> for target player name)
-  admin-phantoms-enabled: "<green>Phantom spawning has been <green>enabled</green> for <player>."
-  admin-phantoms-disabled: "<green>Phantom spawning has been <red>disabled</red> for <player>."
-  admin-status-enabled: "<gray>Phantom spawning is <green>enabled</green> for <player>."
-  admin-status-disabled: "<gray>Phantom spawning is <red>disabled</red> for <player>."
-
+  status-enabled:
+    text: "<#6C757D>[<#6B7A5E>ᴘʜᴀɴᴛᴏᴍꜱ<#6C757D>] <#f2ebd7>Phantom spawning is currently <#8FAA87>enabled<#f2ebd7>."
+    display: chat
+  status-disabled:
+    text: "<#6C757D>[<#6B7A5E>ᴘʜᴀɴᴛᴏᴍꜱ<#6C757D>] <#f2ebd7>Phantom spawning is currently <#C27B6B>disabled<#f2ebd7>."
+    display: chat
+  # Admin messages (<player> = target player name)
+  admin-phantoms-enabled:
+    text: "<#6C757D>[<#6B7A5E>ᴘʜᴀɴᴛᴏᴍꜱ<#6C757D>] <#f2ebd7>Phantom spawning has been <#8FAA87>enabled<#f2ebd7> for <#FCD472><player><#f2ebd7>."
+    display: chat
+  admin-phantoms-disabled:
+    text: "<#6C757D>[<#6B7A5E>ᴘʜᴀɴᴛᴏᴍꜱ<#6C757D>] <#f2ebd7>Phantom spawning has been <#C27B6B>disabled<#f2ebd7> for <#FCD472><player><#f2ebd7>."
+    display: chat
+  admin-status-enabled:
+    text: "<#6C757D>[<#6B7A5E>ᴘʜᴀɴᴛᴏᴍꜱ<#6C757D>] <#f2ebd7>Phantom spawning is <#8FAA87>enabled<#f2ebd7> for <#FCD472><player><#f2ebd7>."
+    display: chat
+  admin-status-disabled:
+    text: "<#6C757D>[<#6B7A5E>ᴘʜᴀɴᴛᴏᴍꜱ<#6C757D>] <#f2ebd7>Phantom spawning is <#C27B6B>disabled<#f2ebd7> for <#FCD472><player><#f2ebd7>."
+    display: chat
   # Notification sent to target player when admin changes their setting
-  admin-notify-enabled: "<yellow>An admin has <green>enabled</green> phantom spawning for you."
-  admin-notify-disabled: "<yellow>An admin has <red>disabled</red> phantom spawning for you."
-
+  admin-notify-enabled:
+    text: "<#6C757D>[<#6B7A5E>ᴘʜᴀɴᴛᴏᴍꜱ<#6C757D>] <#D89B6A>An admin has <#8FAA87>enabled<#D89B6A> phantom spawning for you."
+    display: chat
+  admin-notify-disabled:
+    text: "<#6C757D>[<#6B7A5E>ᴘʜᴀɴᴛᴏᴍꜱ<#6C757D>] <#D89B6A>An admin has <#C27B6B>disabled<#D89B6A> phantom spawning for you."
+    display: chat
   # Error messages
-  no-permission: "<red>You don't have permission to use this command."
-  player-only: "<red>This command can only be used by players."
-  player-not-found: "<red>Player '<player>' has never played on this server."
+  player-not-found:
+    text: "<#6C757D>[<#C27B6B>ᴇʀʀᴏʀ<#6C757D>] <#C27B6B>Player '<#FCD472><player><#C27B6B>' not found."
+    display: chat
+  # Reload messages
+  reload-success:
+    text: "<#6C757D>[<#6B7A5E>ᴘʜᴀɴᴛᴏᴍꜱ<#6C757D>] <#8FAA87>Configuration reloaded."
+    display: chat
+  reload-failed:
+    text: "<#6C757D>[<#C27B6B>ᴇʀʀᴏʀ<#6C757D>] <#C27B6B>Configuration reload failed. Check console for details."
+    display: chat
 
-  # Other messages
-  reload-success: "<green>TogglePhantoms configuration reloaded."
-  reload-failed: "<red>Configuration reload failed. Check console for details."
-
-  # PlaceholderAPI status text
-  placeholder-enabled: "Enabled"
-  placeholder-disabled: "Disabled"
+# ============================================================
+# PLACEHOLDERAPI
+# ============================================================
+# Requires PlaceholderAPI to be installed
+#   %togglephantoms_enabled% - Returns "true" or "false"
+#   %togglephantoms_status%  - Returns the text below
+placeholder-enabled: "Enabled"
+placeholder-disabled: "Disabled"
