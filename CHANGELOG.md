@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- `togglephantoms.use` permission not registering with Paper's permission system, causing non-op players to be unable to toggle phantoms even though the permission was set to `default: true`
+
 ## [2.0.0] - 2026-02-21
 
 ### Changed

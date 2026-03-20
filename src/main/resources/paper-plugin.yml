@@ -11,3 +11,20 @@ dependencies:
     PlaceholderAPI:
       load: BEFORE
       required: false
+permissions:
+  togglephantoms.*:
+    description: 'Grants all TogglePhantoms permissions'
+    default: op
+    children:
+      togglephantoms.use: true
+      togglephantoms.reload: true
+      togglephantoms.admin: true
+  togglephantoms.use:
+    description: 'Allows toggling phantom spawning for yourself'
+    default: true
+  togglephantoms.reload:
+    description: 'Allows reloading the plugin configuration'
+    default: op
+  togglephantoms.admin:
+    description: 'Allows managing phantom settings for other players'
+    default: op
