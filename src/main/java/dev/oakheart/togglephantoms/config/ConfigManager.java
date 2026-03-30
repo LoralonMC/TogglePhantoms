@@ -1,13 +1,9 @@
 package dev.oakheart.togglephantoms.config;
 
 import dev.oakheart.togglephantoms.TogglePhantoms;
-import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.configuration.file.YamlConfiguration;
 
-import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -19,8 +15,8 @@ public class ConfigManager {
 
     private final TogglePhantoms plugin;
     private final Logger logger;
-    private final File configFile;
-    private FileConfiguration config;
+    private final Path configFile;
+    private dev.oakheart.config.ConfigManager config;
 
     private String storageType;
     private String mysqlHost;
@@ -28,19 +24,26 @@ public class ConfigManager {
     private String mysqlDatabase;
     private String mysqlUsername;
     private String mysqlPassword;
+    private String placeholderEnabled;
+    private String placeholderDisabled;
 
     public ConfigManager(TogglePhantoms plugin) {
         this.plugin = plugin;
         this.logger = plugin.getLogger();
-        this.configFile = new File(plugin.getDataFolder(), "config.yml");
+        this.configFile = plugin.getDataFolder().toPath().resolve("config.yml");
     }
 
     public void load() {
-        if (!configFile.exists()) {
+        if (!configFile.toFile().exists()) {
             plugin.saveResource("config.yml", false);
         }
 
-        config = YamlConfiguration.loadConfiguration(configFile);
+        try {
+            config = dev.oakheart.config.ConfigManager.load(configFile);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to load config.yml", e);
+        }
+
         mergeDefaults();
 
         if (!validate(config)) {
@@ -51,30 +54,29 @@ public class ConfigManager {
     }
 
     public boolean reload() {
-        FileConfiguration newConfig = YamlConfiguration.loadConfiguration(configFile);
+        try {
+            config.reload();
+        } catch (IOException e) {
+            logger.warning("Failed to reload config.yml: " + e.getMessage());
+            return false;
+        }
 
-        if (!validate(newConfig)) {
+        if (!validate(config)) {
             logger.warning("Configuration reload failed validation. Keeping previous configuration.");
             return false;
         }
 
-        this.config = newConfig;
         cacheValues();
         logger.info("Configuration reloaded successfully.");
         return true;
     }
 
-    // Only saves to disk if new keys were added, avoiding SnakeYAML reformatting
     private void mergeDefaults() {
         try (var stream = plugin.getResource("config.yml")) {
             if (stream != null) {
-                YamlConfiguration defaults = YamlConfiguration.loadConfiguration(
-                        new InputStreamReader(stream, StandardCharsets.UTF_8));
-                config.setDefaults(defaults);
-
-                if (hasNewKeys(defaults)) {
-                    config.options().copyDefaults(true);
-                    config.save(configFile);
+                var defaults = dev.oakheart.config.ConfigManager.fromStream(stream);
+                if (config.mergeDefaults(defaults)) {
+                    config.save();
                     logger.info("Config updated with new default values.");
                 }
             }
@@ -83,16 +85,7 @@ public class ConfigManager {
         }
     }
 
-    private boolean hasNewKeys(FileConfiguration defaults) {
-        for (String key : defaults.getKeys(true)) {
-            if (!defaults.isConfigurationSection(key) && !config.contains(key, true)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private boolean validate(FileConfiguration configToValidate) {
+    private boolean validate(dev.oakheart.config.ConfigManager configToValidate) {
         List<String> warnings = new ArrayList<>();
         boolean valid = true;
 
@@ -134,9 +127,11 @@ public class ConfigManager {
         mysqlDatabase = config.getString("storage.mysql.database", "minecraft");
         mysqlUsername = config.getString("storage.mysql.username", "root");
         mysqlPassword = config.getString("storage.mysql.password", "");
+        placeholderEnabled = config.getString("placeholder-enabled", "Enabled");
+        placeholderDisabled = config.getString("placeholder-disabled", "Disabled");
     }
 
-    public FileConfiguration getConfig() {
+    public dev.oakheart.config.ConfigManager getConfig() {
         return config;
     }
 
@@ -162,5 +157,13 @@ public class ConfigManager {
 
     public String getMysqlPassword() {
         return mysqlPassword;
+    }
+
+    public String getPlaceholderEnabled() {
+        return placeholderEnabled;
+    }
+
+    public String getPlaceholderDisabled() {
+        return placeholderDisabled;
     }
 }

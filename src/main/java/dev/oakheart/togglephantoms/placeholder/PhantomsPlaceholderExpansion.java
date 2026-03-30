@@ -45,8 +45,8 @@ public class PhantomsPlaceholderExpansion extends PlaceholderExpansion {
         return switch (params.toLowerCase()) {
             case "enabled" -> String.valueOf(!phantomsDisabled);
             case "status" -> phantomsDisabled
-                    ? plugin.getMessageManager().placeholderDisabled()
-                    : plugin.getMessageManager().placeholderEnabled();
+                    ? plugin.getConfigManager().getPlaceholderDisabled()
+                    : plugin.getConfigManager().getPlaceholderEnabled();
             default -> null;
         };
     }

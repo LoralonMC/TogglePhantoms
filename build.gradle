@@ -7,6 +7,7 @@ group = 'dev.oakheart'
 version = '2.0.0'
 
 repositories {
+    mavenLocal()
     mavenCentral()
     maven {
         name = "papermc-repo"
@@ -22,7 +23,7 @@ dependencies {
     compileOnly("io.papermc.paper:paper-api:1.21.10-R0.1-SNAPSHOT")
     compileOnly("me.clip:placeholderapi:2.11.6")
     implementation("org.bstats:bstats-bukkit:3.1.0")
-
+    implementation("dev.oakheart:oakheart-core:1.1.0")
 }
 
 java {
@@ -46,6 +47,10 @@ processResources {
 
 shadowJar {
     relocate 'org.bstats', 'dev.oakheart.togglephantoms.bstats'
+    relocate 'dev.oakheart.config', 'dev.oakheart.togglephantoms.libs.config'
+    relocate 'dev.oakheart.message', 'dev.oakheart.togglephantoms.libs.message'
+    relocate 'dev.oakheart.command', 'dev.oakheart.togglephantoms.libs.command'
+    relocate 'dev.oakheart.util', 'dev.oakheart.togglephantoms.libs.util'
 
     archiveClassifier.set('')
 }

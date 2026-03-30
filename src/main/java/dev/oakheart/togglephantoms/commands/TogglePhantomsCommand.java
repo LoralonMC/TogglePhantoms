@@ -4,16 +4,15 @@ import com.mojang.brigadier.Command;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.tree.LiteralCommandNode;
 import dev.oakheart.togglephantoms.TogglePhantoms;
-import dev.oakheart.togglephantoms.message.MessageManager;
+import dev.oakheart.command.CommandRegistrar;
+import dev.oakheart.message.MessageManager;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import io.papermc.paper.command.brigadier.Commands;
 import io.papermc.paper.command.brigadier.argument.ArgumentTypes;
 import io.papermc.paper.command.brigadier.argument.resolvers.selector.PlayerSelectorArgumentResolver;
-import io.papermc.paper.plugin.lifecycle.event.LifecycleEventManager;
-import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents;
+import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.bukkit.plugin.Plugin;
 
 import java.util.List;
 import java.util.UUID;
@@ -32,11 +31,7 @@ public class TogglePhantomsCommand {
     }
 
     public void register() {
-        LifecycleEventManager<Plugin> manager = plugin.getLifecycleManager();
-        manager.registerEventHandler(LifecycleEvents.COMMANDS, event -> {
-            Commands commands = event.registrar();
-            commands.register(buildCommand(), "Toggle phantom spawning for yourself");
-        });
+        CommandRegistrar.register(plugin, buildCommand(), "Toggle phantom spawning for yourself");
     }
 
     private LiteralCommandNode<CommandSourceStack> buildCommand() {
@@ -47,9 +42,9 @@ public class TogglePhantomsCommand {
                     Player player = (Player) ctx.getSource().getSender();
                     boolean nowDisabled = plugin.togglePhantoms(player.getUniqueId());
                     if (nowDisabled) {
-                        messages().sendPhantomsDisabled(player);
+                        messages().send(player, "phantoms-disabled");
                     } else {
-                        messages().sendPhantomsEnabled(player);
+                        messages().send(player, "phantoms-enabled");
                     }
                     return Command.SINGLE_SUCCESS;
                 })
@@ -59,12 +54,12 @@ public class TogglePhantomsCommand {
                             CommandSender sender = ctx.getSource().getSender();
                             try {
                                 if (plugin.reloadPlugin()) {
-                                    messages().sendReloadSuccess(sender);
+                                    messages().sendCommand(sender, "reload-success");
                                 } else {
-                                    messages().sendReloadFailed(sender);
+                                    messages().sendCommand(sender, "reload-failed");
                                 }
                             } catch (Exception e) {
-                                messages().sendReloadFailed(sender);
+                                messages().sendCommand(sender, "reload-failed");
                             }
                             return Command.SINGLE_SUCCESS;
                         }))
@@ -74,9 +69,9 @@ public class TogglePhantomsCommand {
                         .executes(ctx -> {
                             Player player = (Player) ctx.getSource().getSender();
                             if (plugin.arePhantomsDisabled(player.getUniqueId())) {
-                                messages().sendStatusDisabled(player);
+                                messages().send(player, "status-disabled");
                             } else {
-                                messages().sendStatusEnabled(player);
+                                messages().send(player, "status-enabled");
                             }
                             return Command.SINGLE_SUCCESS;
                         }))
@@ -102,12 +97,12 @@ public class TogglePhantomsCommand {
         try {
             players = resolver.resolve(ctx.getSource());
         } catch (Exception e) {
-            messages().sendPlayerNotFound(sender, "unknown");
+            messages().send(sender, "player-not-found", Placeholder.unparsed("player", "unknown"));
             return Command.SINGLE_SUCCESS;
         }
 
         if (players.isEmpty()) {
-            messages().sendPlayerNotFound(sender, "unknown");
+            messages().send(sender, "player-not-found", Placeholder.unparsed("player", "unknown"));
             return Command.SINGLE_SUCCESS;
         }
 
@@ -118,29 +113,29 @@ public class TogglePhantomsCommand {
         switch (action) {
             case "on" -> {
                 plugin.setPhantomsDisabled(targetUUID, false);
-                messages().sendAdminPhantomsEnabled(sender, targetName);
-                messages().sendAdminNotifyEnabled(target);
+                messages().send(sender, "admin-phantoms-enabled", Placeholder.unparsed("player", targetName));
+                messages().send(target, "admin-notify-enabled");
             }
             case "off" -> {
                 plugin.setPhantomsDisabled(targetUUID, true);
-                messages().sendAdminPhantomsDisabled(sender, targetName);
-                messages().sendAdminNotifyDisabled(target);
+                messages().send(sender, "admin-phantoms-disabled", Placeholder.unparsed("player", targetName));
+                messages().send(target, "admin-notify-disabled");
             }
             case "toggle" -> {
                 boolean nowDisabled = plugin.togglePhantoms(targetUUID);
                 if (nowDisabled) {
-                    messages().sendAdminPhantomsDisabled(sender, targetName);
-                    messages().sendAdminNotifyDisabled(target);
+                    messages().send(sender, "admin-phantoms-disabled", Placeholder.unparsed("player", targetName));
+                    messages().send(target, "admin-notify-disabled");
                 } else {
-                    messages().sendAdminPhantomsEnabled(sender, targetName);
-                    messages().sendAdminNotifyEnabled(target);
+                    messages().send(sender, "admin-phantoms-enabled", Placeholder.unparsed("player", targetName));
+                    messages().send(target, "admin-notify-enabled");
                 }
             }
             case "status" -> {
                 if (plugin.arePhantomsDisabled(targetUUID)) {
-                    messages().sendAdminStatusDisabled(sender, targetName);
+                    messages().send(sender, "admin-status-disabled", Placeholder.unparsed("player", targetName));
                 } else {
-                    messages().sendAdminStatusEnabled(sender, targetName);
+                    messages().send(sender, "admin-status-enabled", Placeholder.unparsed("player", targetName));
                 }
             }
             default -> { }

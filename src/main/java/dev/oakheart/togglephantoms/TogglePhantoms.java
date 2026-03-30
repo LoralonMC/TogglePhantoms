@@ -4,7 +4,7 @@ import dev.oakheart.togglephantoms.commands.TogglePhantomsCommand;
 import dev.oakheart.togglephantoms.config.ConfigManager;
 import dev.oakheart.togglephantoms.listeners.PhantomListener;
 import dev.oakheart.togglephantoms.listeners.PlayerListener;
-import dev.oakheart.togglephantoms.message.MessageManager;
+import dev.oakheart.message.MessageManager;
 import dev.oakheart.togglephantoms.placeholder.PhantomsPlaceholderExpansion;
 import dev.oakheart.togglephantoms.storage.MySQLStorage;
 import dev.oakheart.togglephantoms.storage.SQLiteStorage;
@@ -51,8 +51,8 @@ public final class TogglePhantoms extends JavaPlugin {
         configManager = new ConfigManager(this);
         configManager.load();
 
-        messageManager = new MessageManager();
-        messageManager.load(configManager.getConfig());
+        messageManager = new MessageManager(this, getLogger());
+        messageManager.load();
 
         storage = createStorage(configManager.getStorageType());
     }
@@ -109,7 +109,7 @@ public final class TogglePhantoms extends JavaPlugin {
             return false;
         }
 
-        messageManager.load(configManager.getConfig());
+        messageManager.reload();
 
         String newStorageType = configManager.getStorageType();
         if (!oldStorageType.equals(newStorageType)) {

@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Migrate to OakheartLib shared library (config, messages, commands)
+- Move messages from config.yml to separate messages.yml — existing servers migrate automatically on first startup
+- Config and message files now perfectly preserve comments, formatting, and quoting on every save
+
 ### Fixed
 
 - `togglephantoms.use` permission not registering with Paper's permission system, causing non-op players to be unable to toggle phantoms even though the permission was set to `default: true`
