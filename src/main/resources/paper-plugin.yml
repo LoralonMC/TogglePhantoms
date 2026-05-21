@@ -2,7 +2,7 @@ name: TogglePhantoms
 version: '${version}'
 main: dev.oakheart.togglephantoms.TogglePhantoms
 description: 'Allows players to toggle phantom spawning for themselves.'
-api-version: '1.21.10'
+api-version: '26.1.2'
 authors:
   - Loralon
 website: https://github.com/LoralonMC/TogglePhantoms
