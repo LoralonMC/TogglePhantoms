@@ -36,10 +36,13 @@ public class TogglePhantomsCommand {
 
     private LiteralCommandNode<CommandSourceStack> buildCommand() {
         return Commands.literal("togglephantoms")
-                .requires(src -> src.getSender() instanceof Player
-                        && src.getSender().hasPermission("togglephantoms.use"))
+                .requires(src -> src.getSender().hasPermission("togglephantoms.use"))
                 .executes(ctx -> {
-                    Player player = (Player) ctx.getSource().getSender();
+                    CommandSender sender = ctx.getSource().getSender();
+                    if (!(sender instanceof Player player)) {
+                        messages().sendCommand(sender, "players-only");
+                        return Command.SINGLE_SUCCESS;
+                    }
                     boolean nowDisabled = plugin.togglePhantoms(player.getUniqueId());
                     if (nowDisabled) {
                         messages().send(player, "phantoms-disabled");

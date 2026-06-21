@@ -54,3 +54,4 @@ player-not-found:
 commands:
   reload-success: "<#6C757D>[<#6B7A5E>ᴘʜᴀɴᴛᴏᴍꜱ<#6C757D>] <#8FAA87>Configuration reloaded."
   reload-failed: "<#6C757D>[<#C27B6B>ᴇʀʀᴏʀ<#6C757D>] <#C27B6B>Configuration reload failed. Check console for details."
+  players-only: "<#6C757D>[<#C27B6B>ᴇʀʀᴏʀ<#6C757D>] <#C27B6B>Only players can toggle phantoms for themselves. Use <#FCD472>/togglephantoms admin <player> toggle<#C27B6B> from console."

@@ -105,8 +105,9 @@ public class SQLiteStorage implements Storage {
                 try {
                     ensureConnection();
                     selectStmt.setString(1, uuid.toString());
-                    ResultSet rs = selectStmt.executeQuery();
-                    cache.put(uuid, rs.next() && rs.getInt("disabled") == 1);
+                    try (ResultSet rs = selectStmt.executeQuery()) {
+                        cache.put(uuid, rs.next() && rs.getInt("disabled") == 1);
+                    }
                 } catch (SQLException e) {
                     plugin.getLogger().log(Level.SEVERE, "Could not query SQLite database", e);
                     cache.put(uuid, false);

@@ -1,7 +1,7 @@
 package dev.oakheart.togglephantoms.storage;
 
+import dev.oakheart.config.ConfigManager;
 import dev.oakheart.togglephantoms.TogglePhantoms;
-import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.File;
 import java.io.IOException;
@@ -15,7 +15,7 @@ public class YamlStorage implements Storage {
 
     private final TogglePhantoms plugin;
     private final File dataFile;
-    private YamlConfiguration dataConfig;
+    private ConfigManager dataConfig;
     private final Set<UUID> disabledPlayers = ConcurrentHashMap.newKeySet();
 
     public YamlStorage(TogglePhantoms plugin) {
@@ -31,19 +31,22 @@ public class YamlStorage implements Storage {
             }
         }
 
-        this.dataConfig = YamlConfiguration.loadConfiguration(dataFile);
+        try {
+            this.dataConfig = ConfigManager.load(dataFile.toPath());
+        } catch (IOException e) {
+            plugin.getLogger().log(Level.SEVERE, "Could not load playerdata.yml", e);
+            this.dataConfig = ConfigManager.fromString("");
+        }
         loadAllData();
     }
 
     private void loadAllData() {
         disabledPlayers.clear();
-        if (dataConfig.contains("disabled-players")) {
-            for (String uuidString : dataConfig.getStringList("disabled-players")) {
-                try {
-                    disabledPlayers.add(UUID.fromString(uuidString));
-                } catch (IllegalArgumentException e) {
-                    plugin.getLogger().warning("Invalid UUID in playerdata.yml: " + uuidString);
-                }
+        for (String uuidString : dataConfig.getStringList("disabled-players")) {
+            try {
+                disabledPlayers.add(UUID.fromString(uuidString));
+            } catch (IllegalArgumentException e) {
+                plugin.getLogger().warning("Invalid UUID in playerdata.yml: " + uuidString);
             }
         }
     }
@@ -55,7 +58,7 @@ public class YamlStorage implements Storage {
             synchronized (this) {
                 dataConfig.set("disabled-players", snapshot);
                 try {
-                    dataConfig.save(dataFile);
+                    dataConfig.save(dataFile.toPath());
                 } catch (IOException e) {
                     plugin.getLogger().log(Level.SEVERE, "Could not save playerdata.yml", e);
                 }
@@ -98,7 +101,7 @@ public class YamlStorage implements Storage {
                     .map(UUID::toString)
                     .toList());
             try {
-                dataConfig.save(dataFile);
+                dataConfig.save(dataFile.toPath());
             } catch (IOException e) {
                 plugin.getLogger().log(Level.SEVERE, "Could not save playerdata.yml on shutdown", e);
             }
