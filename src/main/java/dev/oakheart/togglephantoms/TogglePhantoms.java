@@ -113,10 +113,23 @@ public final class TogglePhantoms extends JavaPlugin {
 
         String newStorageType = configManager.getStorageType();
         if (!oldStorageType.equals(newStorageType)) {
-            if (storage != null) {
-                storage.close();
+            // Create the replacement FIRST: createStorage throws on connection
+            // failure, and closing the old storage before that leaves a closed,
+            // cache-cleared instance installed — every online player's toggle
+            // silently reverts until relog. Only swap once the new one exists.
+            Storage newStorage;
+            try {
+                newStorage = createStorage(newStorageType);
+            } catch (RuntimeException e) {
+                getLogger().severe("Failed to switch storage to '" + newStorageType
+                        + "'; keeping the current storage. " + e.getMessage());
+                return false;
             }
-            storage = createStorage(newStorageType);
+            Storage oldStorage = storage;
+            storage = newStorage;
+            if (oldStorage != null) {
+                oldStorage.close();
+            }
         }
 
         // Refresh cache for online players
