@@ -7,8 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.1.0] - 2026-10-20
+
 ### Changed
 
+- Targets Paper 26.3 (`api-version: '26.3'`, built against paper-api 26.3). This build no longer loads on 26.1.2.
 - Migrate to OakheartLib shared library (config, messages, commands)
 - Move messages from config.yml to separate messages.yml — existing servers migrate automatically on first startup
 - Config and message files now perfectly preserve comments, formatting, and quoting on every save
